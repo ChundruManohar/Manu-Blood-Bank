@@ -9,3 +9,9 @@ def home(request):
         "status":"good",
     })
     
+def about(request):
+    return JsonResponse({
+        "message":"it is a home page",
+        "status":"good",
+    })
+    
