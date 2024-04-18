@@ -5,8 +5,8 @@ from .models import User
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.hashers import make_password
 from datetime import datetime
-
-
+from django.contrib.auth import authenticate
+from rest_framework_simplejwt.tokens import RefreshToken
 # Create your views here.
 def home(request):
     return JsonResponse({
@@ -89,3 +89,27 @@ def user_registration(request):
             "Status": "Failed",
             "Message": f"Registration failed. {str(ex)}"
         })
+@csrf_exempt       
+def login(request):
+    if request.method != "POST":
+        return JsonResponse({
+            "status":"failed",
+            "message":"method not allowed"    
+        })
+        
+    else:
+        data = json.loads(request.body)
+        
+        userName = data.get("username")
+        passWord = data.get("password")
+        if userName == "" or userName == None or passWord =="" or passWord ==None:
+            raise Exception("Either username or password cannot be empty")
+        else:
+            user = authenticate(request,username=userName,password=passWord)
+            if user is not None:
+                refresh =RefreshToken.for_user(user)
+                return JsonResponse({
+                    "refresh_token": str(refresh),
+                    "acess_token":str(refresh.access_token)
+                })
+                
