@@ -7,6 +7,12 @@ from django.contrib.auth.hashers import make_password
 from datetime import datetime
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.core.mail import EmailMultiAlternatives,send_mail
+from django.conf import settings
+
+
+
+
 # Create your views here.
 def home(request):
     return JsonResponse({
@@ -50,15 +56,15 @@ def user_registration(request):
         if last_name == '' or last_name ==None:
             raise Exception("last_name cannot be empty")
         
-        email_id     = data.get('email')
-        if email_id == '' or email_id ==None:
-            raise Exception("email_id cannot be empty")
+        emailId     = data.get('email')
+        if emailId == '' or emailId ==None:
+            raise Exception("emailId cannot be empty")
         
         is_staff     = data.get('is_staff')
 
         is_active    = data.get('is_active')
 
-       # date_joined  = str(date.today())
+        #date_joined  = str(date.today())
 
         phone_number = data.get('phonenumber')
 
@@ -71,13 +77,22 @@ def user_registration(request):
             username      =   username,
             first_name    =   first_name,
             last_name     =   last_name,
-            email         =   email_id,
+            email         =   emailId,
             is_staff      =   is_staff,
             is_active     =   is_active,
            # date_joined   =   date_joined,
             phone_number   =   phone_number,
             bio           =   bio,
             )
+        
+        
+        send_mail(
+            "congrations",
+            "you are register sucessfully",
+            settings.EMAIL_HOST_USER,
+            [emailId,"manoharchundru@gmail.com"],
+            fail_silently=False
+        )
 
         return JsonResponse({
             "Status": "Success",
@@ -89,27 +104,31 @@ def user_registration(request):
             "Status": "Failed",
             "Message": f"Registration failed. {str(ex)}"
         })
+        
+        
+        
 @csrf_exempt       
-def login(request):
+def logins(request):
     if request.method != "POST":
         return JsonResponse({
             "status":"failed",
             "message":"method not allowed"    
         })
         
-    else:
+    try:
         data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"status": "failed", "message": "Invalid JSON"}, status=400)
         
-        userName = data.get("username")
-        passWord = data.get("password")
-        if userName == "" or userName == None or passWord =="" or passWord ==None:
+    userName = data.get("username")
+    passWord = data.get("password")
+    if userName == "" or userName == None or passWord =="" or passWord ==None:
             raise Exception("Either username or password cannot be empty")
-        else:
-            user = authenticate(request,username=userName,password=passWord)
-            if user is not None:
-                refresh =RefreshToken.for_user(user)
-                return JsonResponse({
+    else:
+        user = authenticate(request, username=userName, password=passWord)
+        if user is not None:
+            refresh =RefreshToken.for_user(user)
+            return JsonResponse({
                     "refresh_token": str(refresh),
                     "acess_token":str(refresh.access_token)
-                })
-                
+            })

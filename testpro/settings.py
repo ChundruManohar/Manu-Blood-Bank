@@ -134,3 +134,10 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     )
 }
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_USE_TLS = True
+EMAIL_HOST = 'smtp.elasticemail.com'
+EMAIL_HOST_USER = 'manubloodblank2@gmail.com'
+EMAIL_HOST_PASSWORD = '4FE9B17983151B3CA43FC8563203B5A3BB75'
+EMAIL_PORT = 2525
