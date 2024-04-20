@@ -9,6 +9,8 @@ https://docs.djangoproject.com/en/5.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
+
+from datetime import timedelta
 from decouple import config
 from pathlib import Path
 
@@ -25,7 +27,7 @@ SECRET_KEY =config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -111,7 +113,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'Kolkata/Asia'
+TIME_ZONE = 'Asia/Kolkata'
 
 USE_I18N = True
 
@@ -135,6 +137,16 @@ REST_FRAMEWORK = {
     )
 }
 
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=2),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+
+}
+
+
+
+
+
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.elasticemail.com'
@@ -143,6 +155,6 @@ EMAIL_HOST_PASSWORD = '4FE9B17983151B3CA43FC8563203B5A3BB75'
 EMAIL_PORT = 2525
 
 #CSRF_TRUSTED_ORIGINS =['*']
-CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_SECURE = True
-SECURE_PROXY_SSL_HEADER =('HTTP_X_FORWARDED_PROTO', 'https')
+#CSRF_COOKIE_SECURE = True
+#SESSION_COOKIE_SECURE = True
+#SECURE_PROXY_SSL_HEADER =('HTTP_X_FORWARDED_PROTO', 'https')
