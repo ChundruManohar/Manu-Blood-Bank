@@ -1,5 +1,6 @@
 from django.shortcuts import render
 import json
+from rest_framework.response import Response
 from django.http import JsonResponse
 from .models import User
 from django.views.decorators.csrf import csrf_exempt
@@ -9,8 +10,11 @@ from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.mail import EmailMultiAlternatives,send_mail
 from django.conf import settings
+from django.utils import timezone
+from rest_framework.decorators import api_view, permission_classes
 
-
+from rest_framework import permissions
+from rest_framework.permissions import IsAuthenticated
 
 
 # Create your views here.
@@ -40,7 +44,7 @@ def user_registration(request):
         if password == '' or password ==None:
             raise Exception("password cannot be empty")
         
-        last_login   = datetime.now()
+        last_login   = timezone.now()
 
         is_superuser = data.get('is_superuser')
 
@@ -132,3 +136,30 @@ def logins(request):
                     "refresh_token": str(refresh),
                     "acess_token":str(refresh.access_token)
             })
+
+
+@api_view(["PUT"])
+@permission_classes([permissions.IsAuthenticated])  
+def updateuser(request):
+    try:
+        user = User.objects.filter(pk = request.user.id).exists()
+        if user == False:
+            raise Exception("user does not exist")
+        user_obj = User.objects.get(pk = request.user.id)
+        data = request.data
+        user_obj.first_name=data.get("first_name")
+        user_obj.last_name=data.get("last_name")
+        user_obj.email=data.get("email")
+        user_obj.phone_number=data.get("phonenumber")
+        user_obj.bio=data.get("bio")
+        user_obj.save()
+        return JsonResponse({
+            "status":"updated user",
+            "message":"sucessfully"
+        })
+        
+    except Exception as ex:
+        return JsonResponse({
+            "status":"failed",
+            "message": str(ex)
+        })
