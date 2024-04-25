@@ -12,10 +12,14 @@ from django.core.mail import EmailMultiAlternatives,send_mail
 from django.conf import settings
 from django.utils import timezone
 from rest_framework.decorators import api_view, permission_classes
-
 from rest_framework import permissions
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Sum,Max,Min,aggregates,o
+from django.db.models import Sum,Max,Min,aggregates
+from django.utils.crypto import get_random_string
+from django.core.cache import cache
+from django.conf import settings
+from django.template.loader import render_to_string
+from django.core.mail import EmailMultiAlternatives
 
 # Create your views here.
 def home(request):
@@ -108,9 +112,7 @@ def user_registration(request):
             "Status": "Failed",
             "Message": f"Registration failed. {str(ex)}"
         })
-        
-        
-        
+               
 @csrf_exempt       
 def logins(request):
     if request.method != "POST":
@@ -163,3 +165,30 @@ def updateuser(request):
             "status":"failed",
             "message": str(ex)
         })
+
+@csrf_exempt
+def opt_Sender(request):
+    emailId = (json.loads(request.body))['email'] 
+    try:
+        user = User.objects.get(email = emailId)
+    except User.DoesNotExist():
+        return JsonResponse({
+            "status":"failed",
+            "message":"user not exist",
+        })
+        
+        
+    otp = get_random_string(length=4,allowed_chars=("1234567890"))
+    cache.set(emailId,otp,timeout=300)
+    
+    subject="Password reset otp"
+    from_email = settings.EMAIL_HOST_USER 
+    recepient_list = [emailId,'manoharchundru@gmail.com']
+    html_msg =  render_to_string('otp_send.html',{"Otp":otp})
+    email = EmailMultiAlternatives(subject,'',from_email,recepient_list)
+    email.attach_alternative(html_msg,"text/html")
+    email.send()
+    return JsonResponse({
+        "status":"sucesss",
+        "meessage": f"email sent the user"
+    })

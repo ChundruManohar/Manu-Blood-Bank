@@ -6,5 +6,6 @@ urlpatterns = [
     path('about/',views.about,name='about'),
     path('registration/',views.user_registration,name='userregistration'),
     path('login/',views.logins,name='login'),
-    path('updateuser/',views.updateuser,name='updateuser'),  
+    path('updateuser/',views.updateuser,name='updateuser'), 
+    path('otpsender/',views.opt_Sender,name='otpSender'),
 ]
