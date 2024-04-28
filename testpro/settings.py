@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'testapp',
+    'godapp',
     'rest_framework',
 ]
 
@@ -153,6 +154,7 @@ EMAIL_HOST = 'smtp.elasticemail.com'
 EMAIL_HOST_USER = 'manubloodblank2@gmail.com'
 EMAIL_HOST_PASSWORD = '4FE9B17983151B3CA43FC8563203B5A3BB75'
 EMAIL_PORT = 2525
+
 
 #CSRF_TRUSTED_ORIGINS =['*']
 #CSRF_COOKIE_SECURE = True

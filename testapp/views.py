@@ -2,20 +2,24 @@ from django.shortcuts import render
 import json
 from rest_framework.response import Response
 from django.http import JsonResponse
-from .models import User
+from .models import User,Campagin,Contribution
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.hashers import make_password
-from datetime import datetime
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.mail import EmailMultiAlternatives,send_mail
 from django.conf import settings
 from django.utils import timezone
 from rest_framework.decorators import api_view, permission_classes
-
 from rest_framework import permissions
 from rest_framework.permissions import IsAuthenticated
-
+from django.db.models import Sum,Max,Min,aggregates
+from django.utils.crypto import get_random_string
+from django.core.cache import cache
+from django.conf import settings
+from django.template.loader import render_to_string
+from django.core.mail import EmailMultiAlternatives
+from datetime import datetime,date
 
 # Create your views here.
 def home(request):
@@ -108,9 +112,7 @@ def user_registration(request):
             "Status": "Failed",
             "Message": f"Registration failed. {str(ex)}"
         })
-        
-        
-        
+               
 @csrf_exempt       
 def logins(request):
     if request.method != "POST":
@@ -163,3 +165,112 @@ def updateuser(request):
             "status":"failed",
             "message": str(ex)
         })
+
+@csrf_exempt
+def opt_Sender(request):
+    emailId = (json.loads(request.body))['email'] 
+    try:
+        user = User.objects.get(email = emailId)
+    except User.DoesNotExist():
+        return JsonResponse({
+            "status":"failed",
+            "message":"user not exist",
+        })
+        
+        
+    otp = get_random_string(length=4,allowed_chars=("1234567890"))
+    cache.set(emailId,otp,timeout=300)
+    
+    subject="Password reset otp"
+    from_email = settings.EMAIL_HOST_USER 
+    recepient_list = [emailId,'manoharchundru@gmail.com','manohar1231997@outlookoutlook.com']
+    html_msg =  render_to_string('otp_send.html',{"Otp":otp})
+    email = EmailMultiAlternatives(subject,'',from_email,recepient_list)
+    email.attach_alternative(html_msg,"text/html")
+    email.send()
+    return JsonResponse({
+        "status":"sucesss",
+        "meessage": f"email sent the user"
+    })
+    
+@api_view(["POST"])
+def confirm_otp(request):
+    email = request.data.get('email')
+    otp = request.data.get('otp')
+    
+    cached_Otp = cache.get(email)
+    if cached_Otp is None or cached_Otp != otp:
+        return JsonResponse({"message":"Invalid OTP"})
+    return JsonResponse({"message":"veryfied otp sucessfully"})
+    
+@api_view(["POST"])
+def password_reset(request):
+    email = request.data.get('email')
+    password = request.data.get('password')
+    confirm_password = request.data.get('confirm_password')
+    
+    if password != confirm_password:
+        return JsonResponse({"meassage":"password not matched"})
+    
+    catched_otp = cache.get(email)
+    
+    if catched_otp is None:
+        return JsonResponse({"message":"otp expered"})
+    
+    try:
+        user = User.objects.get(email = email)
+    except User.DoesNotExist():
+        return JsonResponse({
+            "message":" user not found",
+        })
+    user.set_password(password)
+    user.save()
+    
+    cache.delete(email)
+    
+    subject= "PASSWORD SAVED"
+    from_email = settings.EMAIL_HOST_USER 
+    recepient_list =[email]
+    
+    html_message = render_to_string('pwd_reset.html',{"password":password})
+    
+    try:
+        email = EmailMultiAlternatives(subject,'',from_email,recepient_list)
+        email.attach_alternative(html_message,"text/html")
+        email.send()
+        return JsonResponse({"message":"Password reset sucessfully"})
+    except:
+        return JsonResponse({"message":"passwod reset sucessfully but send it fail in email"})
+    
+@api_view(["POST"])
+@permission_classes([permissions.IsAuthenticated])
+
+def created_campin(request):
+    data = json.loads(request.body)
+    
+    title = data.get('title')
+    description = data.get('description')
+    funding_goal = data.get('funding_goal')
+    campin_End_date = data.get('campin_end_date')
+    if not title or not description or not funding_goal or not campin_End_date:
+        return JsonResponse({
+            "status":"failed",
+            "message":"data is incomplete"
+        })
+        
+    campin_Start_date = str(date.today())
+    
+    Campin_obj = Campagin.objects.create(
+        title=title,
+        description =description,
+        funding_goal=funding_goal,
+        campin_end_date = campin_End_date,
+        campin_Start_date = campin_Start_date,
+        owner = request.user
+    )
+    Campin_obj.save()
+    
+    return JsonResponse({
+        "status":"sucessfully",
+        "message":"ok created campain sucessfully"
+    })
