@@ -244,7 +244,6 @@ def password_reset(request):
     
 @api_view(["POST"])
 @permission_classes([permissions.IsAuthenticated])
-
 def created_campin(request):
     data = json.loads(request.body)
     
@@ -274,3 +273,49 @@ def created_campin(request):
         "status":"sucessfully",
         "message":"ok created campain sucessfully"
     })
+@api_view(["GET"])
+@csrf_exempt
+def campin_list(request):
+    campin_Objs = Campagin.objects.all()
+    campin_li = []
+    for i in campin_Objs:
+        campin_li.append({
+            'title':i.title,
+            "description":i.description,
+            "funding_goal":i.funding_goal,
+            "campin_Start_date":i.campin_Start_date,
+            "campin_end_date":i.campin_end_date,
+            "owner":i.owner.first_name +" "+i.owner.last_name,
+            "ownerID":i.owner_id,
+        })
+    return JsonResponse({
+        "campin_list":campin_li,
+        "message":"sucess",
+    })
+        
+
+@api_view(['PUT'])
+@permission_classes([permissions.IsAuthenticated])
+def extendCampainEnddate(request):
+    campaginId = (json.loads(request.body)).get('campagin_id')
+    user_id = request.user.id
+    user_obj = User.objects.get(id=user_id)
+    campin_Objs = Campagin.objects.get(id = campaginId)
+    if campin_Objs.owner != user_obj:
+        return JsonResponse({
+            "status":"failed",
+            "message":"you cannot updated"
+        })
+        
+    campin_extend_date = (json.loads(request.body)).get('campin_extend_date')
+    campin_Objs.campin_end_date=campin_extend_date
+    campin_Objs.save()
+    return JsonResponse({
+        "status":"sucess",
+        "message":"data modified sucessfully",
+        "date":campin_extend_date
+    })
+            
+    
+    
+    

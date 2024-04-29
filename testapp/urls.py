@@ -11,5 +11,6 @@ urlpatterns = [
     path('confirm_otp/',views.confirm_otp,name='confirm_otp'),
     path('reset_PWD/',views.password_reset,name='password_reset'),
     path('create_campin/',views.created_campin,name='created_campin'),
-    
+    path('campin_list/',views.campin_list,name='campinlist'),
+    path('extendsCampainEnddate/',views.extendCampainEnddate,name='CamppinEnddate'),
 ]
