@@ -15,11 +15,7 @@ Manu Blood Bank Project Blood-Bank-App
 2 - Connect database in `settings.py` by replacing values with your database instance.
 
 ```python
-DB = harperdb.HarperDB(
-    url="<your-db-url",
-    username="<your-db-passsword>",
-    password="<your-db-username>"
-)
+
 ```
 
 3 - start server
