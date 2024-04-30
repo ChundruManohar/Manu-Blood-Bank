@@ -2,7 +2,7 @@ from django.shortcuts import render
 import json
 from rest_framework.response import Response
 from django.http import JsonResponse
-from .models import User,Campagin,Contribution
+from .models import User,Campagin,Contribution,Category
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth import authenticate
@@ -20,6 +20,7 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
 from datetime import datetime,date
+from rest_framework import status
 
 # Create your views here.
 def home(request):
@@ -43,6 +44,7 @@ def user_registration(request):
 
     try:
         data = json.loads(request.body)
+        CanCreateCampin=data.get("cancreateCampin")
 
         password     = (data.get('password'))
         if password == '' or password ==None:
@@ -91,6 +93,7 @@ def user_registration(request):
            # date_joined   =   date_joined,
             phone_number   =   phone_number,
             bio           =   bio,
+            cancreateCampin= CanCreateCampin,
             )
         
         
@@ -241,6 +244,34 @@ def password_reset(request):
         return JsonResponse({"message":"Password reset sucessfully"})
     except:
         return JsonResponse({"message":"passwod reset sucessfully but send it fail in email"})
+
+@csrf_exempt
+@api_view(["POST"])
+@permission_classes([permissions.IsAuthenticated])
+def created_category(request):
+    if request.user.cancreateCampin ==False:
+        return JsonResponse(
+            {
+                "status":"failed",
+                "message":"user is not Authorized"
+            },status=status.HTTP_401_UNAUTHORIZED
+        ) 
+    else:
+        data = json.loads(request.body)
+        caterory_name = data.get('name')
+        cateory_obj = Category.objects.create(name=caterory_name)
+        return JsonResponse({
+            "status":"sucess",
+            "message":"new cateory is add",
+        })
+            
+
+
+
+
+
+
+
     
 @api_view(["POST"])
 @permission_classes([permissions.IsAuthenticated])
@@ -251,6 +282,8 @@ def created_campin(request):
     description = data.get('description')
     funding_goal = data.get('funding_goal')
     campin_End_date = data.get('campin_end_date')
+    categories = data.get('catergory')
+    category_instance = Category.objects.get(pk = categories)
     if not title or not description or not funding_goal or not campin_End_date:
         return JsonResponse({
             "status":"failed",
@@ -265,7 +298,8 @@ def created_campin(request):
         funding_goal=funding_goal,
         campin_end_date = campin_End_date,
         campin_Start_date = campin_Start_date,
-        owner = request.user
+        owner = request.user,
+        catergory = category_instance,
     )
     Campin_obj.save()
     
